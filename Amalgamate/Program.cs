@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using static Microsoft.CodeAnalysis.CSharp.SyntaxFactory;
 
 namespace Amalgamate {
@@ -43,7 +44,7 @@ namespace Amalgamate {
             }
 
             // build the output tree
-            var output = CompilationUnit()
+            var tree = CompilationUnit()
                 .WithUsings(List(
                     from pair in usingMap
                     orderby pair.Key.TrimEnd(';')   // sort usings by name
@@ -63,6 +64,17 @@ namespace Amalgamate {
                         ))
                 ));
 
+            // compose output
+            var output = new StringBuilder();
+
+            // start with a license file, if one is given
+            if (args.Length > 2) {
+                foreach (var line in File.ReadLines(args[2]))
+                    output.AppendFormat($"// {line}{Environment.NewLine}");
+                output.AppendLine();
+            }
+
+            output.Append(tree.ToString());
             File.WriteAllText(args[1], output.ToString());
         }
 
